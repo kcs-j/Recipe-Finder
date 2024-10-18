@@ -1,0 +1,9 @@
+peanuts
+tree_nuts
+milk
+eggs
+fish
+shellfish
+soy
+wheat
+sesame

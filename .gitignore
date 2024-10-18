@@ -1,0 +1,1 @@
+echo "Recipedata.csv" >> .gitignore
