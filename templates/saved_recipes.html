@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+    body {
+            background-image: url("/static/images/home1.png"); /* 设置背景图 */
+            background-size: cover; /* 让图片覆盖整个页面 */
+            background-position: center; /* 居中显示背景图 */
+            background-repeat: no-repeat; /* 防止图片重复 */
+            background-attachment: fixed; /* 使背景图片固定，不随页面滚动 */
+        }
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saved Recipes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .score-A { background-color: #28a745; color: white; }    /* Green for A */
+        .score-B { background-color: #8bc34a; color: white; }    /* Light Green for B */
+        .score-C { background-color: #ffc107; color: black; }    /* Yellow for C */
+        .score-D { background-color: #ff9800; color: white; }    /* Orange for D */
+        .score-E { background-color: #dc3545; color: white; }    /* Red for E */
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light" style="background-color: rgba(255, 255, 255, 0.8);">
+        <div class="container-fluid">
+            <div class="row w-100">
+                <div class="col text-center">
+                    <a class="navbar-brand mx-auto" href="{{ url_for('index') }}" style="font-family: 'Poppins', sans-serif; font-size: 2rem; font-weight: 600;">
+                        Recipe Finder
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h2 class="text-center">Your Saved Recipes</h2>
+
+        <div class="row mb-4">
+            <div class="col-md-6 offset-md-3">
+                <form method="GET" action="{{ url_for('saved_recipes') }}">
+                    <div class="input-group">
+                        <label class="input-group-text" for="priority">Sort by:</label>
+                        <select class="form-select" id="priority" name="priority">
+                            <option value="nutriscore" {% if priority == 'nutriscore' %}selected{% endif %}>Nutri-Score Priority</option>
+                            <option value="ecoscore" {% if priority == 'ecoscore' %}selected{% endif %}>Eco-Score Priority</option>
+                            <option value="none" {% if priority == 'none' %}selected{% endif %}>Two Factors Unconsidered</option>
+                        </select>
+                        <button class="btn btn-primary" type="submit">Apply</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
+        <div class="row mt-4">
+            {% for recipe in recipes %}
+                <div class="col-md-12 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h4 class="card-title">{{ recipe['title'] }}</h4>
+                            <p><strong>Ingredients and Selected Products:</strong></p>
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Ingredient</th>
+                                        <th>Selected Product</th>
+                                        <th>Nutri-Score</th>
+                                        <th>Eco-Score</th>
+                                        <th> </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for ingredient in recipe['NER'].strip('[]').replace('"', '').split(', ') %}
+                                        <tr>
+                                            <td><a href="{{ url_for('ingredient_search', ingredient=ingredient, priority=request.args.get('priority', 'none'), recipe_title=recipe['title']) }}">{{ ingredient }}</a></td>
+                                            <td>
+                                                {% if session.get('selected_products') and recipe['title'] in session['selected_products'] %}
+                                                    {% for product in session['selected_products'][recipe['title']] %}
+                                                        {% if product['ingredient'] == ingredient %}
+                                                            {{ product['product_name'] }}
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                {% else %}
+                                                    No product selected
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if session.get('selected_products') and recipe['title'] in session['selected_products'] %}
+                                                    {% for product in session['selected_products'][recipe['title']] %}
+                                                        {% if product['ingredient'] == ingredient %}
+                                                            <span class="badge score-{{ product['nutriscore'] | upper }}">{{ product['nutriscore'] }}</span>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if session.get('selected_products') and recipe['title'] in session['selected_products'] %}
+                                                    {% for product in session['selected_products'][recipe['title']] %}
+                                                        {% if product['ingredient'] == ingredient %}
+                                                            <span class="badge score-{{ product['ecoscore'] | upper }}">{{ product['ecoscore'] }}</span>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if session.get('selected_products') and recipe['title'] in session['selected_products'] %}
+                                                    {% for product in session['selected_products'][recipe['title']] %}
+                                                        {% if product['ingredient'] == ingredient %}
+                                                            <form action="{{ url_for('remove_product') }}" method="POST" class="d-inline">
+                                                                <input type="hidden" name="recipe_title" value="{{ recipe['title'] }}">
+                                                                <input type="hidden" name="ingredient" value="{{ ingredient }}">
+                                                                <input type="hidden" name="product_name" value="{{ product['product_name'] }}">
+                                                                <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                                                            </form>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            <a href="{{ recipe['link'] }}" class="btn btn-outline-primary mt-3" target="_blank">View Recipe Source</a>
+                            <a href="{{ url_for('unsave_recipe', recipe_title=recipe['title']) }}" class="btn btn-outline-danger mt-3">Unsave</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

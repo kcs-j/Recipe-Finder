@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+    body {
+            background-image: url("/static/images/home1.png");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ ingredient }} Search Results</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light" style="background-color: rgba(255, 255, 255, 0.8);">
+        <div class="container-fluid">
+            <div class="row w-100">
+                <div class="col text-center">
+                    <a class="navbar-brand mx-auto" href="{{ url_for('index') }}" style="font-family: 'Poppins', sans-serif; font-size: 2rem; font-weight: 600;">
+                        Recipe Finder
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="row">
+            <!-- 左侧筛选栏 -->
+            <div class="col-md-3">
+                <h4>Sort & Filter</h4>
+                <form action="{{ url_for('ingredient_search', ingredient=ingredient) }}" method="GET">
+                    <div class="mb-3">
+                    <label for="priority" class="form-label">Sort by:</label>
+                        <select id="priority" name="priority" class="form-select">
+                            <option value="none" {% if request.args.get('priority') == 'none' %}selected{% endif %}>None</option>
+                            <option value="nutriscore" {% if request.args.get('priority') == 'nutriscore' %}selected{% endif %}>Nutri-Score</option>
+                            <option value="ecoscore" {% if request.args.get('priority') == 'ecoscore' %}selected{% endif %}>Eco-Score</option>
+                        </select>
+                    </div>
+                    <!-- Nutri-Score 筛选框 -->
+                    <div class="mb-3">
+                        <label for="nutri_score_filter" class="form-label">Filter by Nutri-Score:</label>
+                        <select id="nutri_score_filter" name="nutri_score_filter" class="form-select">
+                            <option value="all" {% if request.args.get('nutri_score_filter') == 'all' %}selected{% endif %}>All</option>
+                            <option value="A" {% if request.args.get('nutri_score_filter') == 'A' %}selected{% endif %}>A</option>
+                            <option value="B" {% if request.args.get('nutri_score_filter') == 'B' %}selected{% endif %}>B</option>
+                            <option value="C" {% if request.args.get('nutri_score_filter') == 'C' %}selected{% endif %}>C</option>
+                            <option value="D" {% if request.args.get('nutri_score_filter') == 'D' %}selected{% endif %}>D</option>
+                            <option value="E" {% if request.args.get('nutri_score_filter') == 'E' %}selected{% endif %}>E</option>
+                        </select>
+                    </div>
+
+                    <!-- Eco-Score 筛选框 -->
+                    <div class="mb-3">
+                        <label for="eco_score_filter" class="form-label">Filter by Eco-Score:</label>
+                        <select id="eco_score_filter" name="eco_score_filter" class="form-select">
+                            <option value="all" {% if request.args.get('eco_score_filter') == 'all' %}selected{% endif %}>All</option>
+                            <option value="A" {% if request.args.get('eco_score_filter') == 'A' %}selected{% endif %}>A</option>
+                            <option value="B" {% if request.args.get('eco_score_filter') == 'B' %}selected{% endif %}>B</option>
+                            <option value="C" {% if request.args.get('eco_score_filter') == 'C' %}selected{% endif %}>C</option>
+                            <option value="D" {% if request.args.get('eco_score_filter') == 'D' %}selected{% endif %}>D</option>
+                            <option value="E" {% if request.args.get('eco_score_filter') == 'E' %}selected{% endif %}>E</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                </form>
+            </div>
+
+            <!-- 右侧显示产品结果 -->
+            <div class="col-md-9">
+                <h2>Results for "{{ ingredient }}"</h2>
+                {% if products %}
+                    <ul class="list-group mt-4">
+                        {% for product in products %}
+                            <li class="list-group-item">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <!-- 显示商品图片 -->
+                                        {% if product.get('image_url') %}
+                                            <img src="{{ product['image_url'] }}" alt="Product Image" class="img-fluid">
+                                        {% else %}
+                                            <p>No image available</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-10">
+                                        <strong>Name:</strong> {{ product.get('product_name', 'Unknown') }} <br>
+                                        <strong>Brand:</strong> {{ product.get('brands', 'Unknown') }} <br>
+                                        <strong>Nutri-Score:</strong> {{ product.get('nutriscore_grade', 'N/A') }} <br>
+                                        <strong>Eco-Score:</strong> {{ product.get('ecoscore_grade', 'N/A') }} <br>
+                                        <strong>Ingredients:</strong> {{ product.get('ingredients_text', 'No ingredient information available') }} <br>
+                                        <a href="https://world.openfoodfacts.org/product/{{ product.get('code') }}" target="_blank">View on OpenFoodFacts</a>
+
+                                        <!-- Select button form -->
+                                        <form action="{{ url_for('select_product') }}" method="POST" class="mt-2">
+                                            <input type="hidden" name="recipe_title" value="{{ request.args.get('recipe_title', '') }}">
+                                            <input type="hidden" name="ingredient" value="{{ ingredient }}">
+                                            <input type="hidden" name="product_name" value="{{ product.get('product_name', 'Unknown') }}">
+                                            <input type="hidden" name="nutriscore" value="{{ product.get('nutriscore_grade', 'N/A') }}">
+                                            <input type="hidden" name="ecoscore" value="{{ product.get('ecoscore_grade', 'N/A') }}">
+                                            <button type="submit" class="btn btn-outline-success">Select</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No products found for "{{ ingredient }}".</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
